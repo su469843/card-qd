@@ -19,21 +19,13 @@ const createSql = () => {
 export const sql = createSql()
 
 export async function getOrderById(orderId: number) {
-  // 查询订单主表
-  const orderRows = await sql`SELECT * FROM orders WHERE id = ${orderId} LIMIT 1`;
+  const orderRows = await sql`SELECT id, payment_code, total_price, status FROM orders WHERE id = ${orderId} LIMIT 1`;
   if (!orderRows || orderRows.length === 0) return null;
-  const order = orderRows[0];
+  return orderRows[0];
+}
 
-  // 查询订单商品明细
-  const items = await sql`SELECT * FROM order_items WHERE order_id = ${orderId}`;
-
-  // 查询卡密（如有）
-  const cardRows = await sql`SELECT card_code FROM cards WHERE order_id = ${orderId}`;
-  const card_codes = cardRows && cardRows.length > 0 ? cardRows.map(c => c.card_code).join(', ') : undefined;
-
-  return {
-    ...order,
-    items,
-    card_codes,
-  };
+export async function getProductDescription(productId: number) {
+  const rows = await sql`SELECT description FROM products WHERE id = ${productId} LIMIT 1`;
+  if (!rows || rows.length === 0) return null;
+  return rows[0].description;
 }
