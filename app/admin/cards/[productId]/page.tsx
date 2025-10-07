@@ -225,7 +225,7 @@ export default function ProductCardsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {cards.map((card) => (
+                  {Array.isArray(cards) && cards.map((card) => (
                     <TableRow key={card.id}>
                       <TableCell className="font-mono">{card.card_code}</TableCell>
                       <TableCell>

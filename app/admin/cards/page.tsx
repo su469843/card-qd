@@ -114,7 +114,7 @@ export default function CardsManagementPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => {
+                  {Array.isArray(products) && products.map((product) => {
                     const productStats = getProductStats(product.id)
                     return (
                       <TableRow key={product.id}>
