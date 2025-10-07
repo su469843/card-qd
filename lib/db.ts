@@ -1,24 +1,19 @@
 import { neon } from "@neondatabase/serverless"
 
-if (!process.env.DATABASE_URL) {
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn("DATABASE_URL environment variable is not set - using mock database")
-  }
-}
-
-const mockSql = {
-  async template(strings: TemplateStringsArray, ...values: any[]) {
-    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+const createSql = () => {
+  if (!process.env.DATABASE_URL) {
+    if (process.env.NODE_ENV === 'production') {
       throw new Error("DATABASE_URL environment variable is not set")
     }
     
-    if (!process.env.DATABASE_URL) {
+    console.warn("DATABASE_URL environment variable is not set - using mock database")
+    
+    return async (strings: TemplateStringsArray, ...values: any[]) => {
       return []
     }
-    
-    const realSql = neon(process.env.DATABASE_URL)
-    return realSql(strings, ...values)
   }
+  
+  return neon(process.env.DATABASE_URL)
 }
 
-export const sql = mockSql.template
+export const sql = createSql()

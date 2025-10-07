@@ -1,6 +1,31 @@
 import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 
+export async function GET(request: Request, { params }: { params: { id: string } }) {
+  try {
+    const productId = Number.parseInt(params.id)
+
+    if (Number.isNaN(productId)) {
+      return NextResponse.json({ error: "无效的商品ID" }, { status: 400 })
+    }
+
+    const products = await sql`
+      SELECT id, name, price, image_url, description, tags
+      FROM products
+      WHERE id = ${productId}
+    `
+
+    if (products.length === 0) {
+      return NextResponse.json({ error: "商品不存在" }, { status: 404 })
+    }
+
+    return NextResponse.json(products[0])
+  } catch (error) {
+    console.error("[v0] 获取商品错误:", error)
+    return NextResponse.json({ error: "获取商品失败" }, { status: 500 })
+  }
+}
+
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const productId = Number.parseInt(params.id)
