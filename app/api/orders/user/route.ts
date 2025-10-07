@@ -13,12 +13,13 @@ export async function POST(request: Request) {
     }
 
     console.log("[v0] 查询数据库中的订单...")
-    // 查询该用户的所有订单
     const orders = await sql`
       SELECT 
         o.id,
         o.payment_code,
         o.total_price,
+        o.final_price,
+        o.discount_amount,
         o.status,
         o.created_at,
         json_agg(
@@ -34,12 +35,24 @@ export async function POST(request: Request) {
       LEFT JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN products p ON oi.product_id = p.id
       WHERE o.user_id = ${userId}
-      GROUP BY o.id, o.payment_code, o.total_price, o.status, o.created_at
+      GROUP BY o.id, o.payment_code, o.total_price, o.final_price, o.discount_amount, o.status, o.created_at
       ORDER BY o.created_at DESC
     `
 
     console.log("[v0] 查询成功，找到订单数量:", orders.length)
-    return NextResponse.json({ orders })
+
+    const formattedOrders = orders.map((order) => ({
+      ...order,
+      total_price: Number.parseFloat(order.total_price || "0"),
+      final_price: Number.parseFloat(order.final_price || "0"),
+      discount_amount: Number.parseFloat(order.discount_amount || "0"),
+      items: order.items.map((item: any) => ({
+        ...item,
+        price: Number.parseFloat(item.price || "0"),
+      })),
+    }))
+
+    return NextResponse.json({ orders: formattedOrders })
   } catch (error) {
     console.error("[v0] 获取订单失败 - 详细错误:", error)
     console.error("[v0] 错误堆栈:", error instanceof Error ? error.stack : "无堆栈信息")
