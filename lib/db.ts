@@ -1,4 +1,4 @@
-import { neon } from "@neondatabase/serverless"
+import { neon, sql as neonSql } from "@neondatabase/serverless"
 
 const createSql = () => {
   if (!process.env.DATABASE_URL) {
@@ -28,4 +28,32 @@ export async function getProductDescription(productId: number) {
   const rows = await sql`SELECT description FROM products WHERE id = ${productId} LIMIT 1`;
   if (!rows || rows.length === 0) return null;
   return rows[0].description;
+}
+
+// 优惠码相关
+export async function deleteCoupon(couponId: number) {
+  await sql`DELETE FROM coupons WHERE id = ${couponId}`;
+}
+
+export async function updateCoupon(couponId: number, fields: { code?: string; discount?: number; expires_at?: string }) {
+  const updates = [];
+  if (fields.code !== undefined) updates.push(sql`code = ${fields.code}`);
+  if (fields.discount !== undefined) updates.push(sql`discount = ${fields.discount}`);
+  if (fields.expires_at !== undefined) updates.push(sql`expires_at = ${fields.expires_at}`);
+  if (updates.length === 0) return;
+  await sql`UPDATE coupons SET ${neonSql.join(updates, ', ')} WHERE id = ${couponId}`;
+}
+
+// 兑换码相关
+export async function deleteCard(cardId: number) {
+  await sql`DELETE FROM cards WHERE id = ${cardId}`;
+}
+
+export async function updateCard(cardId: number, fields: { card_code?: string; status?: string; order_id?: number }) {
+  const updates = [];
+  if (fields.card_code !== undefined) updates.push(sql`card_code = ${fields.card_code}`);
+  if (fields.status !== undefined) updates.push(sql`status = ${fields.status}`);
+  if (fields.order_id !== undefined) updates.push(sql`order_id = ${fields.order_id}`);
+  if (updates.length === 0) return;
+  await sql`UPDATE cards SET ${neonSql.join(updates, ', ')} WHERE id = ${cardId}`;
 }
