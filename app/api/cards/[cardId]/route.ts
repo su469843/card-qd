@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import { deleteCard } from "@/lib/db"
 
 export async function GET(request: NextRequest, { params }: { params: { cardId: string } }) {
   const startTime = Date.now()
@@ -57,5 +58,18 @@ export async function GET(request: NextRequest, { params }: { params: { cardId: 
     }))
     
     return NextResponse.json({ error: "获取卡密失败" }, { status: 500 })
+  }
+}
+
+export async function DELETE(req, { params }) {
+  const cardId = Number(params.cardId)
+  if (!cardId || isNaN(cardId)) {
+    return Response.json({ error: "卡密ID无效" }, { status: 400 })
+  }
+  try {
+    await deleteCard(cardId)
+    return Response.json({ success: true })
+  } catch (err) {
+    return Response.json({ error: "删除失败" }, { status: 500 })
   }
 }

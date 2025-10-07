@@ -19,9 +19,19 @@ const createSql = () => {
 export const sql = createSql()
 
 export async function getOrderById(orderId: number) {
-  const orderRows = await sql`SELECT id, payment_code, total_price, status FROM orders WHERE id = ${orderId} LIMIT 1`;
+  const orderRows = await sql`SELECT id, payment_code, total_price, status, discount_amount FROM orders WHERE id = ${orderId} LIMIT 1`;
   if (!orderRows || orderRows.length === 0) return null;
-  return orderRows[0];
+  const order = orderRows[0];
+
+  // 查询兑换码
+  const cardRows = await sql`SELECT card_code FROM cards WHERE order_id = ${orderId}`;
+  const card_codes = cardRows && cardRows.length > 0 ? cardRows.map(c => c.card_code).join(', ') : undefined;
+
+  return {
+    ...order,
+    card_codes,
+    final_price: Number(order.total_price) - Number(order.discount_amount || 0),
+  };
 }
 
 export async function getProductDescription(productId: number) {
