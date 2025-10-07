@@ -39,12 +39,12 @@ export default function CardsManagementPage() {
 
       if (productsRes.ok) {
         const productsData = await productsRes.json()
-        setProducts(productsData.filter((p: Product) => p.use_card_delivery))
+        setProducts(Array.isArray(productsData) ? productsData.filter((p: Product) => p.use_card_delivery) : [])
       }
 
       if (statsRes.ok) {
         const statsData = await statsRes.json()
-        setStats(statsData)
+        setStats(Array.isArray(statsData) ? statsData : [])
       }
     } catch (error) {
       console.error("[v0] 获取数据错误:", error)

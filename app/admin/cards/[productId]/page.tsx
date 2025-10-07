@@ -51,7 +51,7 @@ export default function ProductCardsPage() {
 
       if (cardsRes.ok) {
         const cardsData = await cardsRes.json()
-        setCards(cardsData)
+        setCards(Array.isArray(cardsData) ? cardsData : [])
       }
     } catch (error) {
       console.error("[v0] 获取数据错误:", error)
