@@ -3,7 +3,7 @@ import { sql } from "@/lib/db"
 
 export async function POST(request: Request) {
   try {
-    const { name, price, imageUrl, description, tags } = await request.json()
+    const { name, price, imageUrl, description, tags, useCardDelivery } = await request.json()
 
     if (!name || !price) {
       return NextResponse.json({ error: "商品名称和价格为必填项" }, { status: 400 })
@@ -15,13 +15,14 @@ export async function POST(request: Request) {
     }
 
     await sql`
-      INSERT INTO products (name, price, image_url, description, tags)
+      INSERT INTO products (name, price, image_url, description, tags, use_card_delivery)
       VALUES (
         ${name},
         ${priceNum},
         ${imageUrl || null},
         ${description || null},
-        ${tags || null}
+        ${tags || null},
+        ${useCardDelivery || false}
       )
     `
 

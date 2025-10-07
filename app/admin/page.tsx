@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Package, ShoppingBag, LogOut, Ticket } from "lucide-react" // 添加 Ticket 图标
+import { Package, ShoppingBag, LogOut, Ticket, CreditCard } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -34,7 +34,7 @@ export default function AdminPage() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           <Link href="/admin/products">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
               <CardHeader>
@@ -88,6 +88,25 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">添加、编辑和删除优惠码</p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/cards">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-primary/10 rounded-lg">
+                    <CreditCard className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle>卡密管理</CardTitle>
+                    <CardDescription>管理商品卡密库存</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">批量添加和管理卡密</p>
               </CardContent>
             </Card>
           </Link>

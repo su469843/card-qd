@@ -11,12 +11,14 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { X, ImageIcon } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 
 export function AddProductForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>("")
   const [isUploading, setIsUploading] = useState(false)
+  const [useCardDelivery, setUseCardDelivery] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -98,6 +100,7 @@ export function AddProductForm() {
       imageUrl: imageUrl || (formData.get("imageUrl") as string),
       description: formData.get("description") as string,
       tags: formData.get("tags") as string,
+      useCardDelivery,
     }
 
     if (!data.name || !data.price) {
@@ -219,6 +222,16 @@ export function AddProductForm() {
               rows={5}
               className="resize-none"
             />
+          </div>
+
+          <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/30">
+            <div className="space-y-0.5">
+              <Label htmlFor="use-card-delivery" className="text-base font-medium">
+                开启卡密发货
+              </Label>
+              <p className="text-sm text-muted-foreground">启用后，订单将自动分配卡密，用户可在订单中查看</p>
+            </div>
+            <Switch id="use-card-delivery" checked={useCardDelivery} onCheckedChange={setUseCardDelivery} />
           </div>
 
           <Button type="submit" disabled={isLoading || isUploading} className="w-full" size="lg">
