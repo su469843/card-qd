@@ -27,6 +27,7 @@ interface Order {
   discount_amount: number
   status: string
   created_at: string
+  card_codes?: string
   items: OrderItem[]
 }
 
@@ -174,6 +175,17 @@ export default function OrdersPage() {
                         <div className="flex justify-between text-green-600">
                           <span>优惠:</span>
                           <span>-¥{order.discount_amount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {order.status === "paid" && order.card_codes && (
+                        <div className="border-t pt-4">
+                          <h4 className="font-semibold text-foreground mb-2">兑换码:</h4>
+                          <div className="bg-muted p-3 rounded-md">
+                            <p className="text-sm font-mono break-all">{order.card_codes}</p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              请妥善保管您的兑换码，每个兑换码只能使用一次
+                            </p>
+                          </div>
                         </div>
                       )}
                       <div className="flex justify-between items-center pt-2 border-t">

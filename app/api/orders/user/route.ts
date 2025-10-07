@@ -22,6 +22,7 @@ export async function POST(request: Request) {
         o.discount_amount,
         o.status,
         o.created_at,
+        o.card_codes,
         json_agg(
           json_build_object(
             'product_id', oi.product_id,
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
       LEFT JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN products p ON oi.product_id = p.id
       WHERE o.user_id = ${userId}
-      GROUP BY o.id, o.payment_code, o.total_price, o.final_price, o.discount_amount, o.status, o.created_at
+      GROUP BY o.id, o.payment_code, o.total_price, o.final_price, o.discount_amount, o.status, o.created_at, o.card_codes
       ORDER BY o.created_at DESC
     `
 
