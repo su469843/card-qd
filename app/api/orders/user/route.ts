@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       total_price: Number.parseFloat(order.total_price || "0"),
       final_price: Number.parseFloat(order.final_price || "0"),
       discount_amount: Number.parseFloat(order.discount_amount || "0"),
-      items: order.items.map((item: any) => ({
+      items: (order.items || []).map((item: any) => ({
         ...item,
         price: Number.parseFloat(item.price || "0"),
       })),
