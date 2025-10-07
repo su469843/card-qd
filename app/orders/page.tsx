@@ -148,7 +148,7 @@ export default function OrdersPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {order.items.map((item, index) => (
+                    {(order.items || []).map((item, index) => (
                       <div key={index} className="flex gap-4">
                         <div className="relative w-20 h-20 bg-muted rounded-lg overflow-hidden flex-shrink-0">
                           <Image
