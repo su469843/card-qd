@@ -41,7 +41,7 @@ export default function ProductCardsPage() {
     try {
       const [productRes, cardsRes] = await Promise.all([
         fetch(`/api/products/${productId}`),
-        fetch(`/api/cards/${productId}`),
+        fetch(`/api/cards/by-product/${productId}`),
       ])
 
       if (productRes.ok) {

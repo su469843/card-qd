@@ -149,6 +149,11 @@ export default function OrdersPage() {
                   <p className="text-sm text-muted-foreground">
                     下单时间: {new Date(order.created_at).toLocaleString("zh-CN")}
                   </p>
+                  <div className="mt-2 text-right">
+                    <Link href={`/orders/${order.id}`}>
+                      <Button size="sm" variant="outline">查看详情</Button>
+                    </Link>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
