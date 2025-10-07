@@ -6,6 +6,8 @@ interface Order {
   id: number
   payment_code: string
   total_price: string
+  final_price: string
+  discount_amount: string
   status: string
 }
 
@@ -19,7 +21,7 @@ export default async function PaymentPage({ params }: { params: { orderId: strin
   }
 
   const orders = await sql<Order[]>`
-    SELECT id, payment_code, total_price, status
+    SELECT id, payment_code, total_price, final_price, discount_amount, status
     FROM orders
     WHERE id = ${orderId}
   `
