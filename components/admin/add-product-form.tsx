@@ -19,6 +19,7 @@ export function AddProductForm() {
   const [imagePreview, setImagePreview] = useState<string>("")
   const [isUploading, setIsUploading] = useState(false)
   const [useCardDelivery, setUseCardDelivery] = useState(false)
+  const [isPresale, setIsPresale] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -101,6 +102,11 @@ export function AddProductForm() {
       description: formData.get("description") as string,
       tags: formData.get("tags") as string,
       useCardDelivery,
+      maxPerUser: formData.get("maxPerUser") ? Number(formData.get("maxPerUser")) : null,
+      totalStock: formData.get("totalStock") ? Number(formData.get("totalStock")) : null,
+      saleEndTime: formData.get("saleEndTime") || null,
+      isPresale,
+      presaleStartTime: formData.get("presaleStartTime") || null,
     }
 
     if (!data.name || !data.price) {
@@ -232,6 +238,46 @@ export function AddProductForm() {
               <p className="text-sm text-muted-foreground">启用后，订单将自动分配卡密，用户可在订单中查看</p>
             </div>
             <Switch id="use-card-delivery" checked={useCardDelivery} onCheckedChange={setUseCardDelivery} />
+          </div>
+
+          <div className="space-y-4 p-4 border border-border rounded-lg bg-muted/10">
+            <h3 className="text-lg font-semibold">购买限制设置</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="maxPerUser">每人限购数量</Label>
+                <Input id="maxPerUser" name="maxPerUser" type="number" min="1" placeholder="不填则不限制" />
+                <p className="text-xs text-muted-foreground">每个用户最多可购买的数量</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="totalStock">总库存数量</Label>
+                <Input id="totalStock" name="totalStock" type="number" min="0" placeholder="不填则不限制" />
+                <p className="text-xs text-muted-foreground">商品总库存，售完即止</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="saleEndTime">销售截止时间</Label>
+                <Input id="saleEndTime" name="saleEndTime" type="datetime-local" />
+                <p className="text-xs text-muted-foreground">到期后将无法购买</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="presaleStartTime">预售开始时间</Label>
+                <Input id="presaleStartTime" name="presaleStartTime" type="datetime-local" disabled={!isPresale} />
+                <p className="text-xs text-muted-foreground">到达此时间后才可购买</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-background">
+              <div className="space-y-0.5">
+                <Label htmlFor="is-presale" className="text-sm font-medium">
+                  预售模式
+                </Label>
+                <p className="text-xs text-muted-foreground">启用后，需等到预售时间才能购买</p>
+              </div>
+              <Switch id="is-presale" checked={isPresale} onCheckedChange={setIsPresale} />
+            </div>
           </div>
 
           <Button type="submit" disabled={isLoading || isUploading} className="w-full" size="lg">

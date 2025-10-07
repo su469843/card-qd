@@ -51,6 +51,60 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "验证令牌缺失" }, { status: 400 })
     }
 
+    for (const item of items) {
+      const products = await sql`
+        SELECT 
+          id, name, max_per_user, total_stock, sold_count,
+          sale_end_time, is_presale, presale_start_time
+        FROM products
+        WHERE id = ${item.productId}
+      `
+
+      if (products.length === 0) {
+        return NextResponse.json({ error: `商品 ${item.productId} 不存在` }, { status: 400 })
+      }
+
+      const product = products[0]
+      const now = new Date()
+
+      // 检查销售截止时间
+      if (product.sale_end_time && new Date(product.sale_end_time) < now) {
+        return NextResponse.json({ error: `商品 ${product.name} 已停止销售` }, { status: 400 })
+      }
+
+      // 检查预售时间
+      if (product.is_presale && product.presale_start_time && new Date(product.presale_start_time) > now) {
+        return NextResponse.json({ error: `商品 ${product.name} 预售未开始` }, { status: 400 })
+      }
+
+      // 检查库存
+      if (product.total_stock !== null && product.sold_count + item.quantity > product.total_stock) {
+        return NextResponse.json({ error: `商品 ${product.name} 库存不足` }, { status: 400 })
+      }
+
+      // 检查每人限购
+      if (product.max_per_user !== null) {
+        const userOrders = await sql`
+          SELECT COALESCE(SUM(oi.quantity), 0) as total_purchased
+          FROM orders o
+          JOIN order_items oi ON o.id = oi.order_id
+          WHERE o.user_id = ${userId}
+            AND oi.product_id = ${item.productId}
+            AND o.status IN ('pending', 'paid')
+        `
+
+        const totalPurchased = Number(userOrders[0]?.total_purchased || 0)
+        if (totalPurchased + item.quantity > product.max_per_user) {
+          return NextResponse.json(
+            {
+              error: `商品 ${product.name} 每人限购 ${product.max_per_user} 件，您已购买 ${totalPurchased} 件`,
+            },
+            { status: 400 },
+          )
+        }
+      }
+    }
+
     const totalPrice = items.reduce(
       (sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity,
       0,
@@ -105,9 +159,15 @@ export async function POST(request: Request) {
         INSERT INTO order_items (order_id, product_id, quantity, price)
         VALUES (${orderId}, ${item.productId}, ${item.quantity}, ${item.price})
       `
+
+      await sql`
+        UPDATE products
+        SET sold_count = sold_count + ${item.quantity}
+        WHERE id = ${item.productId}
+      `
     }
 
-    console.log("[v0] 订单创建 API: 订单商品已插入")
+    console.log("[v0] 订单创建 API: 订单商品已插入，库存已更新")
     console.log("[v0] 订单创建 API: 订单创建成功，返回数据")
 
     return NextResponse.json({
