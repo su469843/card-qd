@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { MarkdownEditor } from "@/components/ui/markdown-editor"
 import { useToast } from "@/hooks/use-toast"
 import { X, ImageIcon } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
@@ -221,12 +222,21 @@ export function AddProductForm() {
 
           <div className="space-y-2">
             <Label htmlFor="description">商品详情（可选）</Label>
-            <Textarea
+            <MarkdownEditor
+              value=""
+              onChange={(value) => {
+                const textarea = document.getElementById('description') as HTMLTextAreaElement
+                if (textarea) {
+                  textarea.value = value
+                }
+              }}
+              placeholder="请输入商品详细介绍，支持Markdown语法..."
+            />
+            <textarea
               id="description"
               name="description"
-              placeholder="请输入商品详细介绍"
-              rows={5}
-              className="resize-none"
+              className="hidden"
+              onChange={() => {}}
             />
           </div>
 

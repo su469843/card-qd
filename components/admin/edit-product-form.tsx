@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
+import { MarkdownEditor } from "@/components/ui/markdown-editor"
 import { useToast } from "@/hooks/use-toast"
 import { Upload, X, Loader2 } from "lucide-react"
 import Image from "next/image"
@@ -255,13 +256,10 @@ export function EditProductForm({ product }: { product: Product }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">商品详情（可选）</Label>
-            <Textarea
-              id="description"
-              placeholder="请输入商品详细介绍"
+            <MarkdownEditor
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={5}
+              onChange={(value) => setFormData({ ...formData, description: value })}
+              placeholder="请输入商品详细介绍，支持Markdown语法..."
             />
           </div>
 
