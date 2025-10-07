@@ -10,40 +10,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Image from "next/image"
-
-interface OrderItem {
-  product_id: number
-  quantity: number
-  price: number
-  name: string
-  image_url: string | null
-}
-
-interface Order {
-  id: number
-  payment_code: string
-  total_price: number
-  final_price: number
-  discount_amount: number
-  status: string
-  created_at: string
-  card_codes?: string
-  items: OrderItem[]
-}
+import type { OrderWithItems } from "@/types"
 
 export default function OrdersPage() {
   const searchParams = useSearchParams()
   const showSuccess = searchParams.get("success") === "true"
 
-  const [orders, setOrders] = useState<Order[]>([])
+  const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        console.log("[v0] 订单页面: 开始获取订单")
         const userId = getUserId()
-        console.log("[v0] 订单页面: 用户ID =", userId)
 
         const response = await fetch("/api/orders/user", {
           method: "POST",
@@ -51,20 +31,21 @@ export default function OrdersPage() {
           body: JSON.stringify({ userId }),
         })
 
-        console.log("[v0] 订单页面: API 响应状态 =", response.status)
-
         if (!response.ok) {
-          const errorText = await response.text()
-          console.error("[v0] 订单页面: API 错误响应 =", errorText)
-          throw new Error("获取订单失败")
+          const data = await response.json()
+          throw new Error(data.error || "获取订单失败")
         }
 
         const data = await response.json()
-        console.log("[v0] 订单页面: 获取到的订单数据 =", data)
-        setOrders(data.orders)
+        
+        if (data.success && data.data) {
+          setOrders(data.data.orders)
+        } else {
+          throw new Error(data.error || "获取订单失败")
+        }
       } catch (error) {
-        console.error("[v0] 订单页面: 获取订单错误 =", error)
-        console.error("[v0] 订单页面: 错误详情 =", error instanceof Error ? error.message : String(error))
+        console.error("获取订单错误:", error)
+        setError(error instanceof Error ? error.message : "获取订单失败")
       } finally {
         setIsLoading(false)
       }
@@ -97,6 +78,29 @@ export default function OrdersPage() {
       default:
         return "default"
     }
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border bg-card">
+          <div className="container mx-auto px-4 py-4">
+            <Link href="/">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                返回首页
+              </Button>
+            </Link>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-8 max-w-4xl">
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </main>
+      </div>
+    )
   }
 
   return (

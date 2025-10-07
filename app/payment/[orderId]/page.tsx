@@ -1,15 +1,7 @@
 import { notFound } from "next/navigation"
 import { sql } from "@/lib/db"
 import { PaymentDisplay } from "@/components/payment-display"
-
-interface Order {
-  id: number
-  payment_code: string
-  total_price: string
-  final_price: string
-  discount_amount: string
-  status: string
-}
+import type { Order } from "@/types"
 
 export const dynamic = "force-dynamic"
 
@@ -21,7 +13,13 @@ export default async function PaymentPage({ params }: { params: { orderId: strin
   }
 
   const orders = await sql<Order[]>`
-    SELECT id, payment_code, total_price, final_price, discount_amount, status
+    SELECT 
+      id, 
+      payment_code, 
+      total_price::float as total_price, 
+      final_price::float as final_price, 
+      discount_amount::float as discount_amount, 
+      status
     FROM orders
     WHERE id = ${orderId}
   `
