@@ -277,7 +277,10 @@ export default function CheckoutPage() {
                   <div>
                     <Label>安全验证</Label>
                     <div className="mt-2">
-                      <Turnstile siteKey="0x4AAAAAAB48K0IuWR_YyY9U" onSuccess={(token) => setTurnstileToken(token)} />
+                      <Turnstile
+                        siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAAB48K0IuWR_YyY9U"}
+                        onSuccess={(token) => setTurnstileToken(token)}
+                      />
                     </div>
                   </div>
 
