@@ -13,8 +13,6 @@ interface Order {
   id: number
   payment_code: string
   total_price: string
-  final_price: string
-  discount_amount: string
   status: string
 }
 
@@ -101,22 +99,10 @@ export function PaymentDisplay({ order }: { order: Order }) {
           </div>
 
           <div className="border-t border-border pt-4">
-            <div className="space-y-2 mb-2">
-              <div className="flex justify-between text-muted-foreground">
-                <span>原价</span>
-                <span>¥{Number.parseFloat(order.total_price).toFixed(2)}</span>
-              </div>
-              {Number.parseFloat(order.discount_amount) > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>优惠</span>
-                  <span>-¥{Number.parseFloat(order.discount_amount).toFixed(2)}</span>
-                </div>
-              )}
-            </div>
-            <div className="flex justify-between items-center border-t border-border pt-2">
-              <span className="text-lg font-semibold text-foreground">实付金额</span>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-muted-foreground">订单金额</span>
               <span className="text-2xl font-bold text-primary">
-                ¥{Number.parseFloat(order.final_price).toFixed(2)}
+                ¥{Number.parseFloat(order.total_price).toFixed(2)}
               </span>
             </div>
           </div>

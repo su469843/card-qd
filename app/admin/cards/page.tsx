@@ -39,12 +39,12 @@ export default function CardsManagementPage() {
 
       if (productsRes.ok) {
         const productsData = await productsRes.json()
-        setProducts(Array.isArray(productsData) ? productsData.filter((p: Product) => p.use_card_delivery) : [])
+        setProducts(productsData.filter((p: Product) => p.use_card_delivery))
       }
 
       if (statsRes.ok) {
         const statsData = await statsRes.json()
-        setStats(Array.isArray(statsData) ? statsData : [])
+        setStats(statsData)
       }
     } catch (error) {
       console.error("[v0] 获取数据错误:", error)
@@ -114,7 +114,7 @@ export default function CardsManagementPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(products) && products.map((product) => {
+                  {products.map((product) => {
                     const productStats = getProductStats(product.id)
                     return (
                       <TableRow key={product.id}>

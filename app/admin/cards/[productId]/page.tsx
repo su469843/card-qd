@@ -51,7 +51,7 @@ export default function ProductCardsPage() {
 
       if (cardsRes.ok) {
         const cardsData = await cardsRes.json()
-        setCards(Array.isArray(cardsData) ? cardsData : [])
+        setCards(cardsData)
       }
     } catch (error) {
       console.error("[v0] 获取数据错误:", error)
@@ -126,7 +126,7 @@ export default function ProductCardsPage() {
     if (!confirm("确定要删除这个卡密吗？")) return
 
     try {
-      const response = await fetch(`/api/cards/${cardId}`, {
+      const response = await fetch(`/api/cards/delete/${cardId}`, {
         method: "DELETE",
       })
 
@@ -225,7 +225,7 @@ export default function ProductCardsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(cards) && cards.map((card) => (
+                  {cards.map((card) => (
                     <TableRow key={card.id}>
                       <TableCell className="font-mono">{card.card_code}</TableCell>
                       <TableCell>
