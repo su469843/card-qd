@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, { params }: { params: { productI
 
     console.log("[v0] Found cards:", cards.length)
 
-    return NextResponse.json({ cards })
+    return NextResponse.json(cards)
   } catch (error) {
     console.error("[v0] Error fetching cards:", error)
     return NextResponse.json({ error: "获取卡密失败" }, { status: 500 })
