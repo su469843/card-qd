@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface ProductCard {
   id: number
@@ -31,6 +32,8 @@ export default function ProductCardsPage() {
   const [cardInput, setCardInput] = useState("")
   const [separator, setSeparator] = useState<"newline" | "comma">("newline")
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set())
+  const [isDeleting, setIsDeleting] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -146,6 +149,72 @@ export default function ProductCardsPage() {
     }
   }
 
+  const handleBatchDelete = async () => {
+    if (selectedCards.size === 0) {
+      toast({
+        title: "请先选择要删除的卡密",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!confirm(`确定要删除选中的 ${selectedCards.size} 个卡密吗？`)) return
+
+    setIsDeleting(true)
+
+    try {
+      const response = await fetch("/api/cards/batch-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cardIds: Array.from(selectedCards),
+        }),
+      })
+
+      if (!response.ok) throw new Error("批量删除失败")
+
+      const result = await response.json()
+
+      toast({
+        title: "删除成功",
+        description: `成功删除 ${result.deleted} 个卡密`,
+      })
+
+      setSelectedCards(new Set())
+      fetchData()
+    } catch (error) {
+      console.error("[v0] 批量删除错误:", error)
+      toast({
+        title: "删除失败",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const availableCardIds = cards.filter((card) => card.status === "available").map((card) => card.id)
+      setSelectedCards(new Set(availableCardIds))
+    } else {
+      setSelectedCards(new Set())
+    }
+  }
+
+  const handleSelectCard = (cardId: number, checked: boolean) => {
+    const newSelected = new Set(selectedCards)
+    if (checked) {
+      newSelected.add(cardId)
+    } else {
+      newSelected.delete(cardId)
+    }
+    setSelectedCards(newSelected)
+  }
+
+  const availableCards = cards.filter((card) => card.status === "available")
+  const allAvailableSelected = availableCards.length > 0 && availableCards.every((card) => selectedCards.has(card.id))
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
@@ -207,8 +276,18 @@ export default function ProductCardsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>卡密列表</CardTitle>
-            <CardDescription>共 {cards.length} 个卡密</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>卡密列表</CardTitle>
+                <CardDescription>共 {cards.length} 个卡密</CardDescription>
+              </div>
+              {selectedCards.size > 0 && (
+                <Button variant="destructive" onClick={handleBatchDelete} disabled={isDeleting}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {isDeleting ? "删除中..." : `删除选中 (${selectedCards.size})`}
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {cards.length === 0 ? (
@@ -217,6 +296,13 @@ export default function ProductCardsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={allAvailableSelected}
+                        onCheckedChange={handleSelectAll}
+                        disabled={availableCards.length === 0}
+                      />
+                    </TableHead>
                     <TableHead>卡密</TableHead>
                     <TableHead>状态</TableHead>
                     <TableHead>订单ID</TableHead>
@@ -227,6 +313,13 @@ export default function ProductCardsPage() {
                 <TableBody>
                   {cards.map((card) => (
                     <TableRow key={card.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedCards.has(card.id)}
+                          onCheckedChange={(checked) => handleSelectCard(card.id, checked as boolean)}
+                          disabled={card.status !== "available"}
+                        />
+                      </TableCell>
                       <TableCell className="font-mono">{card.card_code}</TableCell>
                       <TableCell>
                         <Badge variant={card.status === "available" ? "default" : "secondary"}>
