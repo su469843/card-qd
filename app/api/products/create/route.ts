@@ -15,6 +15,8 @@ export async function POST(request: Request) {
       saleEndTime,
       isPresale,
       presaleStartTime,
+      isBalanceCard,
+      cardValue,
     } = await request.json()
 
     if (!name || !price) {
@@ -38,7 +40,9 @@ export async function POST(request: Request) {
         total_stock,
         sale_end_time,
         is_presale,
-        presale_start_time
+        presale_start_time,
+        is_balance_card,
+        card_value
       )
       VALUES (
         ${name},
@@ -51,7 +55,9 @@ export async function POST(request: Request) {
         ${totalStock || null},
         ${saleEndTime || null},
         ${isPresale || false},
-        ${presaleStartTime || null}
+        ${presaleStartTime || null},
+        ${isBalanceCard || false},
+        ${cardValue || null}
       )
     `
 

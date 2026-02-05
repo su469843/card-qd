@@ -2,6 +2,8 @@ import Link from "next/link"
 import { sql } from "@/lib/db"
 import { ProductCard } from "@/components/product-card"
 import { CartButton } from "@/components/cart-button"
+import { BalanceDisplay } from "@/components/balance-display"
+import { UserMenu } from "@/components/user-menu"
 import { Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -30,22 +32,27 @@ export default async function HomePage() {
           <Link href="/" className="text-2xl font-bold text-foreground">
             商户购买平台
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/orders">
               <Button variant="ghost" size="sm">
-                <Package className="h-4 w-4 mr-2" />
-                我的订单
+                <Package className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">我的订单</span>
               </Button>
             </Link>
-            <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              管理员入口
+            <Link href="/admin" className="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              管理员
             </Link>
             <CartButton />
+            <UserMenu />
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <BalanceDisplay />
+        </div>
+        
         <h1 className="text-3xl font-bold mb-8 text-foreground">精选商品</h1>
 
         {products.length === 0 ? (

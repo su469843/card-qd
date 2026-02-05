@@ -20,6 +20,7 @@ export function AddProductForm() {
   const [isUploading, setIsUploading] = useState(false)
   const [useCardDelivery, setUseCardDelivery] = useState(false)
   const [isPresale, setIsPresale] = useState(false)
+  const [isBalanceCard, setIsBalanceCard] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -98,7 +99,7 @@ export function AddProductForm() {
     const data = {
       name: formData.get("name") as string,
       price: formData.get("price") as string,
-      imageUrl: imageUrl || (formData.get("imageUrl") as string),
+      imageUrl: imageUrl || (formData.get("imageUrl") as string) || (isBalanceCard ? "/balance-card.jpg" : ""),
       description: formData.get("description") as string,
       tags: formData.get("tags") as string,
       useCardDelivery,
@@ -107,6 +108,8 @@ export function AddProductForm() {
       saleEndTime: formData.get("saleEndTime") || null,
       isPresale,
       presaleStartTime: formData.get("presaleStartTime") || null,
+      isBalanceCard,
+      cardValue: isBalanceCard && formData.get("cardValue") ? Number(formData.get("cardValue")) : null,
     }
 
     if (!data.name || !data.price) {
@@ -230,14 +233,46 @@ export function AddProductForm() {
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/30">
-            <div className="space-y-0.5">
-              <Label htmlFor="use-card-delivery" className="text-base font-medium">
-                开启卡密发货
-              </Label>
-              <p className="text-sm text-muted-foreground">启用后，订单将自动分配卡密，用户可在订单中查看</p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-500/20">
+              <div className="space-y-0.5">
+                <Label htmlFor="is-balance-card" className="text-base font-medium">
+                  消费卡商品 ✨
+                </Label>
+                <p className="text-sm text-muted-foreground">启用后，用户购买此商品将自动充值到余额账户</p>
+              </div>
+              <Switch id="is-balance-card" checked={isBalanceCard} onCheckedChange={setIsBalanceCard} />
             </div>
-            <Switch id="use-card-delivery" checked={useCardDelivery} onCheckedChange={setUseCardDelivery} />
+
+            {isBalanceCard && (
+              <div className="space-y-2 p-4 border border-purple-500/20 rounded-lg bg-purple-500/5 animate-in fade-in slide-in-from-top-2 duration-300">
+                <Label htmlFor="cardValue">
+                  消费卡面值 <span className="text-destructive">*</span>
+                </Label>
+                <Input 
+                  id="cardValue" 
+                  name="cardValue" 
+                  type="number" 
+                  step="0.01" 
+                  min="0" 
+                  placeholder="请输入充值金额" 
+                  required={isBalanceCard}
+                />
+                <p className="text-xs text-muted-foreground">
+                  用户购买后将充值此金额到账户余额（商品价格可与面值不同）
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/30">
+              <div className="space-y-0.5">
+                <Label htmlFor="use-card-delivery" className="text-base font-medium">
+                  开启卡密发货
+                </Label>
+                <p className="text-sm text-muted-foreground">启用后，订单将自动分配卡密，用户可在订单中查看</p>
+              </div>
+              <Switch id="use-card-delivery" checked={useCardDelivery} onCheckedChange={setUseCardDelivery} />
+            </div>
           </div>
 
           <div className="space-y-4 p-4 border border-border rounded-lg bg-muted/10">
