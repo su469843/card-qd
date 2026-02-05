@@ -3,7 +3,6 @@ import { sql } from "@/lib/db"
 import { ProductCard } from "@/components/product-card"
 import { CartButton } from "@/components/cart-button"
 import { BalanceDisplay } from "@/components/balance-display"
-import { UserMenu } from "@/components/user-menu"
 import { Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
