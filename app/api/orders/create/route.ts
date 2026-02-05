@@ -29,6 +29,8 @@ export async function POST(request: Request) {
       discountAmount,
       finalPrice,
       turnstileToken,
+      useBalance,
+      balanceAmount,
     } = body
 
     if (!items || items.length === 0) {
@@ -114,10 +116,39 @@ export async function POST(request: Request) {
     console.log("[v0] 订单创建 API: 最终价格 =", finalPrice)
     console.log("[v0] 订单创建 API: 优惠金额 =", discountAmount)
 
-    const paymentCode = generatePaymentCode()
+    // 处理余额支付
+    let actualBalanceUsed = 0
+    let remainingPrice = finalPrice
+    let paymentMethod = "payment_code"
 
-    const orderStatus = finalPrice <= 0 ? "paid" : "pending"
-    console.log("[v0] 订单创建 API: 订单状态 =", orderStatus)
+    if (useBalance && balanceAmount > 0) {
+      const balanceResult = await sql`
+        SELECT balance FROM user_balances WHERE user_id = ${userId}
+      `
+
+      if (balanceResult.length > 0) {
+        const currentBalance = Number.parseFloat(balanceResult[0].balance)
+        actualBalanceUsed = Math.min(balanceAmount, currentBalance, finalPrice)
+        remainingPrice = finalPrice - actualBalanceUsed
+
+        if (actualBalanceUsed > 0) {
+          // 扣除余额
+          const newBalance = currentBalance - actualBalanceUsed
+          await sql`
+            UPDATE user_balances 
+            SET balance = ${newBalance}, updated_at = CURRENT_TIMESTAMP 
+            WHERE user_id = ${userId}
+          `
+
+          paymentMethod = remainingPrice > 0 ? "mixed" : "balance"
+          console.log("[v0] 订单创建 API: 使用余额 =", actualBalanceUsed, "剩余需支付 =", remainingPrice)
+        }
+      }
+    }
+
+    const paymentCode = generatePaymentCode()
+    const orderStatus = remainingPrice <= 0 ? "paid" : "pending"
+    console.log("[v0] 订单创建 API: 订单状态 =", orderStatus, "支付方式 =", paymentMethod)
 
     const orderResult = await sql`
       INSERT INTO orders (
@@ -132,7 +163,9 @@ export async function POST(request: Request) {
         notes,
         coupon_code,
         discount_amount,
-        final_price
+        final_price,
+        balance_paid,
+        payment_method
       )
       VALUES (
         ${paymentCode}, 
@@ -146,7 +179,9 @@ export async function POST(request: Request) {
         ${notes || null},
         ${couponCode || null},
         ${discountAmount || 0},
-        ${finalPrice}
+        ${finalPrice},
+        ${actualBalanceUsed},
+        ${paymentMethod}
       )
       RETURNING id
     `
@@ -165,16 +200,78 @@ export async function POST(request: Request) {
         SET sold_count = sold_count + ${item.quantity}
         WHERE id = ${item.productId}
       `
+
+      // 如果是消费卡且订单已支付，立即充值余额
+      if (orderStatus === "paid") {
+        const productResult = await sql`
+          SELECT is_balance_card, card_value FROM products WHERE id = ${item.productId}
+        `
+
+        if (productResult.length > 0 && productResult[0].is_balance_card && productResult[0].card_value) {
+          const cardValue = Number.parseFloat(productResult[0].card_value)
+          const totalRecharge = cardValue * item.quantity
+
+          // 获取或创建用户余额记录
+          let balanceResult = await sql`
+            SELECT balance FROM user_balances WHERE user_id = ${userId}
+          `
+
+          let currentBalance = 0
+          if (balanceResult.length === 0) {
+            await sql`
+              INSERT INTO user_balances (user_id, balance) VALUES (${userId}, 0.00)
+            `
+          } else {
+            currentBalance = Number.parseFloat(balanceResult[0].balance)
+          }
+
+          const newBalance = currentBalance + totalRecharge
+
+          // 更新余额
+          await sql`
+            UPDATE user_balances SET balance = ${newBalance}, updated_at = CURRENT_TIMESTAMP WHERE user_id = ${userId}
+          `
+
+          // 记录交易
+          await sql`
+            INSERT INTO balance_transactions 
+            (user_id, type, amount, balance_before, balance_after, order_id, description) 
+            VALUES (${userId}, 'recharge', ${totalRecharge}, ${currentBalance}, ${newBalance}, ${orderId}, ${`购买消费卡充值 (${item.quantity}张)`})
+          `
+
+          console.log("[v0] 订单创建 API: 消费卡充值成功，充值金额 =", totalRecharge)
+        }
+      }
     }
 
     console.log("[v0] 订单创建 API: 订单商品已插入，库存已更新")
+
+    // 如果使用了余额，记录余额消费
+    if (actualBalanceUsed > 0) {
+      const balanceResult = await sql`
+        SELECT balance FROM user_balances WHERE user_id = ${userId}
+      `
+
+      if (balanceResult.length > 0) {
+        const currentBalance = Number.parseFloat(balanceResult[0].balance)
+
+        await sql`
+          INSERT INTO balance_transactions 
+          (user_id, type, amount, balance_before, balance_after, order_id, description) 
+          VALUES (${userId}, 'consume', ${actualBalanceUsed}, ${currentBalance + actualBalanceUsed}, ${currentBalance}, ${orderId}, '订单支付')
+        `
+      }
+    }
+
     console.log("[v0] 订单创建 API: 订单创建成功，返回数据")
 
     return NextResponse.json({
       orderId,
       paymentCode,
       status: orderStatus,
-      isFree: finalPrice <= 0,
+      isFree: remainingPrice <= 0,
+      balanceUsed: actualBalanceUsed,
+      remainingPrice,
     })
   } catch (error) {
     console.error("[v0] 订单创建 API: 错误 =", error)

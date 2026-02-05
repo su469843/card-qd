@@ -2,6 +2,7 @@ import Link from "next/link"
 import { sql } from "@/lib/db"
 import { ProductCard } from "@/components/product-card"
 import { CartButton } from "@/components/cart-button"
+import { BalanceDisplay } from "@/components/balance-display"
 import { Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -46,6 +47,10 @@ export default async function HomePage() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <BalanceDisplay />
+        </div>
+        
         <h1 className="text-3xl font-bold mb-8 text-foreground">精选商品</h1>
 
         {products.length === 0 ? (
