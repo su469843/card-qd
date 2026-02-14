@@ -76,10 +76,14 @@ export default function BuyGiftCardPage() {
       // 这里我们需要找到消费卡商品或创建一个临时订单
       const response = await fetch("/api/gift/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("sessionToken") || ""}`
+        },
         body: JSON.stringify({
-          amount,
-          isGiftForOthers,
+          cardValue: amount,
+          isGift: isGiftForOthers,
+          userId: user.id,
           recipientEmail: isGiftForOthers ? recipientEmail : null,
           message: message || null,
         }),
@@ -96,9 +100,11 @@ export default function BuyGiftCardPage() {
         description: isGiftForOthers ? "已生成兑换码，可以分享给对方" : "余额已充值到账户",
       })
 
+      console.log("[v0] 礼品卡创建成功:", data)
+
       // 跳转到结果页面
-      if (isGiftForOthers) {
-        router.push(`/my-gifts?new=${data.giftCode}`)
+      if (isGiftForOthers && data.code) {
+        router.push(`/my-gifts?new=${data.code}`)
       } else {
         router.push("/wallet")
       }

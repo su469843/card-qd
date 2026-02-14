@@ -24,6 +24,7 @@ export default function MyGiftsPage() {
   const [codes, setCodes] = useState<GiftCode[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [copiedId, setCopiedId] = useState<number | null>(null)
+  const [newCode, setNewCode] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -32,6 +33,15 @@ export default function MyGiftsPage() {
     }
     if (user) {
       fetchCodes()
+      
+      // 检查是否有新创建的兑换码
+      const urlParams = new URLSearchParams(window.location.search)
+      const newCodeParam = urlParams.get('new')
+      if (newCodeParam) {
+        setNewCode(newCodeParam)
+        // 自动复制到剪贴板
+        navigator.clipboard.writeText(newCodeParam).catch(console.error)
+      }
     }
   }, [user, authLoading, router])
 
@@ -113,6 +123,31 @@ export default function MyGiftsPage() {
               </div>
             ) : (
               <div className="space-y-4">
+                {newCode && (
+                  <div className="p-4 rounded-xl border-2 border-primary bg-gradient-to-r from-primary/10 to-primary/5 animate-in fade-in slide-in-from-top-2 duration-500">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Gift className="h-5 w-5 text-primary" />
+                      <span className="font-semibold text-primary">新创建的礼品卡</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-background font-mono text-lg font-bold">
+                      <span className="flex-1">{newCode}</span>
+                      <button
+                        onClick={() => copyCode(newCode, -1)}
+                        className="p-2 rounded hover:bg-muted transition-colors"
+                      >
+                        {copiedId === -1 ? (
+                          <Check className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <Copy className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      兑换码已自动复制到剪贴板，请妥善保管并分享给收件人
+                    </p>
+                  </div>
+                )}
+                
                 {codes.map((code) => (
                   <div
                     key={code.id}
