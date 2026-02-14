@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query } from '@/lib/db'
+import { sql } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,19 +9,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '缺少用户ID' }, { status: 400 })
     }
 
-    const result = await query(
-      `SELECT * FROM balance_transactions 
-       WHERE user_id = $1 
-       ORDER BY created_at DESC 
-       LIMIT 50`,
-      [userId]
-    )
+    const result = await sql`
+      SELECT * FROM balance_transactions 
+      WHERE user_id = ${userId} 
+      ORDER BY created_at DESC 
+      LIMIT 50
+    `
 
-    const transactions = result.rows.map(row => ({
+    const transactions = result.map(row => ({
       ...row,
-      amount: parseFloat(row.amount),
-      balance_before: parseFloat(row.balance_before),
-      balance_after: parseFloat(row.balance_after)
+      amount: Number.parseFloat(row.amount),
+      balance_before: Number.parseFloat(row.balance_before),
+      balance_after: Number.parseFloat(row.balance_after)
     }))
 
     return NextResponse.json(transactions)

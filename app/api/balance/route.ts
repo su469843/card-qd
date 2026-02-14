@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query } from '@/lib/db'
+import { sql } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,20 +12,18 @@ export async function GET(request: NextRequest) {
     }
 
     // 获取或创建用户余额记录
-    let result = await query(
-      'SELECT * FROM user_balances WHERE user_id = $1',
-      [userId]
-    )
+    let result = await sql`
+      SELECT * FROM user_balances WHERE user_id = ${userId}
+    `
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       // 创建新的余额记录
-      result = await query(
-        'INSERT INTO user_balances (user_id, balance) VALUES ($1, 0.00) RETURNING *',
-        [userId]
-      )
+      result = await sql`
+        INSERT INTO user_balances (user_id, balance) VALUES (${userId}, 0.00) RETURNING *
+      `
     }
 
-    const balance = parseFloat(result.rows[0].balance)
+    const balance = Number.parseFloat(result[0].balance)
 
     console.log('[v0] 用户余额:', balance)
 
