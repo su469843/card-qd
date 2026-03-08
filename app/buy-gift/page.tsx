@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Gift, Sparkles } from "lucide-react"
+import { ArrowLeft, Gift, Sparkles, Copy, Check, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,6 +14,15 @@ import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 
 const PRESET_AMOUNTS = [50, 100, 200, 500, 1000, 2000]
+
+interface PurchaseResult {
+  success: boolean
+  code?: string
+  cardValue?: number
+  giftUrl?: string
+  redeemed?: boolean
+  newBalance?: number
+}
 
 export default function BuyGiftCardPage() {
   const router = useRouter()
@@ -26,6 +35,8 @@ export default function BuyGiftCardPage() {
   const [recipientEmail, setRecipientEmail] = useState("")
   const [message, setMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [purchaseResult, setPurchaseResult] = useState<PurchaseResult | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const handleAmountChange = (value: number) => {
     setAmount(value)
@@ -38,6 +49,26 @@ export default function BuyGiftCardPage() {
     if (!Number.isNaN(num) && num > 0) {
       setAmount(num)
     }
+  }
+
+  const copyCode = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      toast({ title: "已复制到剪贴板" })
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      toast({ title: "复制失败", variant: "destructive" })
+    }
+  }
+
+  const resetForm = () => {
+    setPurchaseResult(null)
+    setAmount(100)
+    setCustomAmount("")
+    setIsGiftForOthers(false)
+    setRecipientEmail("")
+    setMessage("")
   }
 
   const handlePurchase = async () => {
@@ -100,12 +131,16 @@ export default function BuyGiftCardPage() {
         description: isGiftForOthers ? "已生成兑换码，可以分享给对方" : "余额已充值到账户",
       })
 
-      console.log("[v0] 礼品卡创建成功:", data)
-
-      // 跳转到结果页面
+      // 如果是赠送模式，直接显示兑换码
       if (isGiftForOthers && data.code) {
-        router.push(`/my-gifts?new=${data.code}`)
+        setPurchaseResult({
+          success: true,
+          code: data.code,
+          cardValue: amount,
+          giftUrl: data.giftUrl || `${window.location.origin}/redeem?code=${data.code}`,
+        })
       } else {
+        // 自用模式，跳转到钱包
         router.push("/wallet")
       }
     } catch (error) {
@@ -140,6 +175,82 @@ export default function BuyGiftCardPage() {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* 购买成功：显示兑换码 */}
+        {purchaseResult?.success && purchaseResult.code && (
+          <div className="max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <Card className="border-2 border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10">
+              <CardHeader className="text-center pb-2">
+                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Gift className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">礼品卡创建成功!</CardTitle>
+                <CardDescription>请复制下方兑换码分享给您的朋友</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* 金额显示 */}
+                <div className="text-center">
+                  <span className="text-4xl font-bold text-primary">¥{purchaseResult.cardValue}</span>
+                </div>
+
+                {/* 兑换码显示 */}
+                <div className="p-4 rounded-xl bg-background border-2 border-dashed border-primary/30">
+                  <p className="text-xs text-muted-foreground mb-2 text-center">兑换码</p>
+                  <div className="flex items-center justify-center gap-3">
+                    <code className="text-2xl font-mono font-bold tracking-wider text-foreground">
+                      {purchaseResult.code}
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => copyCode(purchaseResult.code!)}
+                      className="shrink-0"
+                    >
+                      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 兑换链接 */}
+                {purchaseResult.giftUrl && (
+                  <div className="p-4 rounded-xl bg-muted/50">
+                    <p className="text-xs text-muted-foreground mb-2">或分享兑换链接</p>
+                    <div className="flex items-center gap-2">
+                      <Input value={purchaseResult.giftUrl} readOnly className="font-mono text-sm" />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => copyCode(purchaseResult.giftUrl!)}
+                        className="shrink-0"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 操作按钮 */}
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={resetForm} className="flex-1">
+                    继续购买
+                  </Button>
+                  <Link href="/my-gifts" className="flex-1">
+                    <Button className="w-full">
+                      查看我的礼品卡
+                      <ExternalLink className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+
+                <p className="text-xs text-center text-muted-foreground">
+                  兑换码永久有效，请妥善保管
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* 购买表单 */}
+        {!purchaseResult && (
         <div className="grid lg:grid-cols-2 gap-8">
           {/* 左侧：购买表单 */}
           <div className="space-y-6">
@@ -245,6 +356,7 @@ export default function BuyGiftCardPage() {
             <GiftCardPreview amount={amount} recipientEmail={recipientEmail} isGiftForOthers={isGiftForOthers} />
           </div>
         </div>
+        )}
       </main>
     </div>
   )
