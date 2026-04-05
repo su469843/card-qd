@@ -180,3 +180,42 @@ export const LOGIN_ATTEMPT_CONFIG = {
   maxAttempts: 5,
   lockDurationMinutes: 15,
 }
+
+/**
+ * 生成错误响应
+ */
+export function getErrorResponse(
+  error: AuthError | Error,
+  statusCode?: number
+): Response {
+  const { NextResponse } = require('next/server')
+  
+  if (error instanceof AuthError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: error.code,
+          message: error.message,
+        },
+      },
+      { status: error.statusCode }
+    )
+  }
+  
+  // 处理其他错误类型
+  const code = (error as any)?.code || 'UNKNOWN_ERROR'
+  const message = error.message || '发生了一个错误'
+  const status = statusCode || 500
+  
+  return NextResponse.json(
+    {
+      success: false,
+      error: {
+        code,
+        message,
+      },
+    },
+    { status }
+  )
+}
